@@ -1,0 +1,6 @@
+scene: room0
+inherit_from: configs/Replica/replica.yaml
+config_path: configs/Replica/room0.yaml
+data:
+  input_folder: Datasets/Replica/room0
+  output: output/Replica/room0

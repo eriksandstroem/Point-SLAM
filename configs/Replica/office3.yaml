@@ -1,0 +1,6 @@
+scene: office3
+inherit_from: configs/Replica/replica.yaml
+config_path: configs/Replica/office3.yaml
+data:
+  input_folder: Datasets/Replica/office3
+  output: output/Replica/office3

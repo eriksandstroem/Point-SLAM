@@ -1,0 +1,122 @@
+verbose: True # will use tqdm
+low_gpu_mem: True # empty cuda cache after each optimization loop for tracker and mapper
+use_dynamic_radius: True # choose radius_add and radius_query dynamically based on color gradients
+wandb: False # automatically logs to weights and biases when True. Requires account.
+wandb_folder : "/home/notchla/point-slam/output" # local folder to wandb output
+setup_seed: 1219
+reconstruction_datasets: ["replica"] # add the names of the datasets to be meshed
+render_datasets: ["replica"] # add the names of the datasets to be rendered (depth and color)
+model:
+  c_dim: 32 # feature dimension of color and geometric neural points
+  exposure_dim: 8 # latent dimension of the exposure compensation features
+  pos_embedding_method: fourier # only 'fourier' is used
+  encode_rel_pos_in_col: True # encode relative position before color feature interpolation
+  encode_exposure: False # optimize a per frame feature vector to deal with auto-exposure effects
+  use_view_direction: False # use viewing direction in color decoder
+  encode_viewd: True # encodes view direction in color decoder with fourier embedding when True
+pretrained_decoders:
+  middle_fine: pretrained/middle_fine.pt # one ckpt contains both middle and fine from NICE-SLAM. We only load the middle one.
+tracking:
+  ignore_edge_W: 20 # ignores to sample rays falling closer than the number of pixels to the edge of the image
+  ignore_edge_H: 20
+  use_color_in_tracking: True # use color loss in tracking
+  device: "cuda:0"
+  handle_dynamic: True # filter away pixel rays that have too high uncertainty. This leverages the observed "gt depth".
+  depth_limit: False # when True, neglect depth pixels with larger depth values than 5 m
+  vis_freq: 50 # frame frequency of visualizing the tracking performance
+  vis_inside: False # visualize the tracking performance inside the optimization loop
+  vis_inside_freq: 50 # iteration frequency of visualizing the tracking performance
+  w_color_loss: 0.5 # weight of color loss term
+  separate_LR: True # use separate learning rate for translation and rotation (quaternion). Uses 1/5 of the tracking.lr for the rotation
+  const_speed_assumption: True # if True, adds the previous relative pose change between the last two frames. If False, just copies the last known pose as initial solution.
+  sample_with_color_grad: False # if True, samples pixels with high color gradient for tracking. See implementation details in paper.
+  gt_camera: False # use ground truth camera poses
+  lr: 0.002
+  pixels: 200 # number of sampled rays per frame. M_t in paper.
+  iters: 20 # how many iterations of optimizer per tracking stage
+mapping:
+  device: "cuda:0"
+  color_refine: True # refine color decoder at the end of trajectory capture as post processing step
+  geo_iter_ratio: 0.4
+  geo_iter_first: 400
+  every_frame: 5 # map only every X frames
+  BA: False # Do Bundle Adjustment or not
+  BA_cam_lr: 0.0002
+  lazy_start: False # if to map every frame at beginning
+  frustum_edge: -4 # enlarges image plane a little in frustum feature selection
+  fix_geo_decoder: True # whether to fix the weights of the geometric decoder
+  fix_color_decoder: False # used when doing color refinement so that only the features are updated
+  vis_freq: 50 # frame frequency of visualizing the mapping performance
+  vis_inside: False # visualize the mapping performance inside the optimization loop
+  vis_inside_freq: 1000 # iteration frequency of visualizing the mapping performance
+  ckpt_freq: 2000 # checkpoint saving frame frequency
+  save_ckpts: True # save output to .tar file
+  keyframe_every: 50 # add frame to keyframe list every X frames
+  mapping_window_size: 5 # X - 2 keyframes used for BA and mapping. 2X used for color refinement step (if used)
+  w_color_loss: 0.1 # weight of color loss term
+  frustum_feature_selection: True # required for updating a local set of features from the neural point cloud
+  keyframe_selection_method: "overlap" # overlap or global. Overlap is described in the paper. Global is just random keyframe selection
+  save_selected_keyframes_info: True # saves the keyframes selected at the current mapping frame
+  pixels: 1000 # number of sampled rays per frame. M in paper.
+  pixels_adding: 6000 # number of pixels choosing for adding points. X in paper.
+  pixels_based_on_color_grad: 0 # Y in paper.
+  iters_first: 1500 # how many iterations of optimizer for first frame
+  iters: 400 # how many iterations of optimizer per mapping stage
+  save_rendered_image: True # if True, saves the rgb image also in a separate folder compared to the standard visualization
+  min_iter_ratio: 0.95 # mapping iteration lower bound parameter. See supplementary material
+  init:
+    geometry:
+      decoders_lr: 0.001
+      geometry_lr: 0.03
+      color_lr: 0.0
+    color:
+      decoders_lr: 0.005
+      geometry_lr: 0.005
+      color_lr: 0.005
+  stage:
+    geometry:
+      decoders_lr: 0.001
+      geometry_lr: 0.03
+      color_lr: 0.0
+    color:
+      decoders_lr: 0.005
+      geometry_lr: 0.005
+      color_lr: 0.005
+cam:
+  H: 680
+  W: 1200
+  fx: 600.0
+  fy: 600.0
+  cx: 599.5
+  cy: 339.5
+  png_depth_scale: 6553.5
+  crop_edge: 0
+rendering:
+  N_surface: 5 # number of samples close to the surface for rendering
+  near_end: 0.3 # sample from near end for zero-valued depth pixels
+  near_end_surface: 0.98 # rendering interval: 1 - rho in paper
+  far_end_surface: 1.02 # rendering interval: 1 + rho in paper
+  sigmoid_coef_tracker: 0.1
+  sigmoid_coef_mapper: 0.1
+  sample_near_pcl: True # sample near the pcl when the pixel depth is zero
+  eval_img: False # if True, evaluates the LPIPS, SSIM and PSNR of the rendered images
+meshing:
+  eval_rec: True # if True, evaluates the F-score and depth L1 metrics of the mesh
+  mesh_freq: -1 # meshing frame frequency for visualization
+pointcloud:
+  nn_num: 8 # how many nn to choose at most within search radius
+  min_nn_num: 2 # if nn_num less than this, will skip this sample location
+  N_add: 3 # how many point to add at one location (front and behind gt_depth)
+  nn_weighting: "distance" # 'distance'|'expo" whether to use e(-x) or inverse square distance for weighting
+  radius_add: 0.04 # radius_add & radius_min are used when dynamic radius is not enabled
+  radius_min: 0.02 # used when use_dynamic_radius is False
+  radius_query: 0.08 # used when use_dynamic_radius is False
+  radius_add_max: 0.08 # r_max, r_min of add and query are used by dynamic radius based on color grad range [0, color_grad_threshold]
+  radius_add_min: 0.02
+  radius_query_ratio: 2 # when use_dynamic_radius is True, multiply radius add by this factor to get query radius
+  color_grad_threshold: 0.15 # threshold for color gradient. This value maps to the smallest search radius
+  near_end_surface: 0.98 # adding points interval: 1 - rho in paper
+  far_end_surface: 1.02 # adding points interval: 1 + rho in paper
+  nlist: 400 # FAISS parameter
+  nprobe: 4 # FAISS parameter
+  fix_interval_when_add_along_ray: False # when True, adds points equally spread centered at depth (-4 cm to +4 cm) and not dependent on depth

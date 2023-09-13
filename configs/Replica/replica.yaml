@@ -1,0 +1,21 @@
+dataset: 'replica'
+project_name: "Point_SLAM_replica"
+tracking:
+  vis_freq: 200
+  ignore_edge_W: 100
+  ignore_edge_H: 100
+  pixels: 1500
+  iters: 40
+  vis_inside_freq: 40
+mapping:
+  color_refine: True
+  ckpt_freq: 1000
+  keyframe_every: 20
+  mapping_window_size: 12
+  pixels: 5000
+  pixels_based_on_color_grad: 1000
+  iters: 300
+  lazy_start: 20
+rendering:
+  sample_near_pcl: False
+  eval_img: True

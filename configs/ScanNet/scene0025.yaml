@@ -1,0 +1,6 @@
+scene: scene0025_02
+inherit_from: configs/ScanNet/scannet.yaml
+config_path: configs/ScanNet/scene0025.yaml
+data:
+  input_folder: /home/esandstroem/scratch-second/data/scannet/scene0025_02
+  output: output/ScanNet/scene0025

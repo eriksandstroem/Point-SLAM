@@ -1,0 +1,11 @@
+scene: scene0181_00
+inherit_from: configs/ScanNet/scannet.yaml
+config_path: configs/ScanNet/scene0181.yaml
+data:
+  input_folder: /home/esandstroem/scratch-second/data/scannet/scene0181_00
+  output: output/ScanNet/scene0181
+cam: 
+  fx: 575.547668
+  fy: 577.459778
+  cx: 323.171967
+  cy: 236.417465
