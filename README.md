@@ -25,6 +25,33 @@
 Point-SLAM produces accurate dense geometry and camera tracking on large-scale indoor scenes.
 </p>
 
+<p align="center">
+  <a href="">
+    <img src="./media/teaser.jpg" alt="Logo" width="100%">
+  </a>
+</p>
+<p align="center">
+Due to the spatially adaptive anchoring of neural features, Point-SLAM can encode
+high-frequency details more effectively than NICE-SLAM
+which leads to superior performance in rendering, recon-
+struction and tracking accuracy while attaining competitive
+runtime and memory usage. The first row shows the feature anchor points. For NICE-SLAM we show the centers
+of non-empty voxels located on a regular grid, while the
+density of anchor points for Point-SLAM depends on depth
+and image gradients. The row below depicts resulting renderings showing substantial differences on areas with high-
+frequency textures like the vase, blinds, floor or blanket.
+</p>
+
+
+<p align="center">
+  <a href="">
+    <img src="./media/architecture.jpg" alt="Logo" width="100%">
+  </a>
+</p>
+<p align="center">
+Point-SLAM Architecture.
+</p>
+
 <!-- TABLE OF CONTENTS -->
 <details open="open" style='padding: 10px; border-radius:5px 30px 30px 5px; border-style: solid; border-width: 1px;'>
   <summary>Table of Contents</summary>
