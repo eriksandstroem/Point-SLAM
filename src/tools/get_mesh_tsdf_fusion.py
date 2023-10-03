@@ -175,7 +175,6 @@ def main():
     parser.add_argument("--no_eval", default=False, action='store_true',
                         help="if to evaluate the mesh by 2d and 3d metrics.",
                         )
-    parser.add_argument("--input_folder", type=str, default=None, help="if different input folder is used.",)
 
     parser.add_argument('--wandb', action='store_true')
     parser.add_argument('--no_wandb', action='store_true')
