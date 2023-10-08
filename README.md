@@ -115,6 +115,7 @@ bash scripts/download_cull_replica_mesh.sh
 ```bash
 bash scripts/download_tum.sh
 ```
+DATAROOT is `./datasets` by default. Please change the `input_folder` path in the scene specific config files if stored somewhere else on your machine.
 
 
 ### ScanNet
