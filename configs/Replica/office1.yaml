@@ -2,5 +2,5 @@ scene: office1
 inherit_from: configs/Replica/replica.yaml
 config_path: configs/Replica/office1.yaml
 data:
-  input_folder: Datasets/Replica/office1
+  input_folder: datasets/Replica/office1
   output: output/Replica/office1
