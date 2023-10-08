@@ -83,12 +83,12 @@ Point-SLAM Architecture.
 First you have to make sure that you have all dependencies in place.
 The simplest way to do so is to use [anaconda](https://www.anaconda.com/). 
 
-If you are running Point-SLAM on a cluster GPU without a display, we recommend installing the headless version of Open3D which is required to evaluate the depth L1 metric of the reconstructed mesh. This requires compiling Open3D from scratch. The code is tested on Open3D 15.1 and 16.0. If compiling Open3D from scratch, remove the Open3D dependency from the `environmeny.yaml` file.
+If you are running Point-SLAM on a cluster GPU without a display, we recommend installing the headless version of Open3D which is required to evaluate the depth L1 metric of the reconstructed mesh. This requires compiling Open3D from scratch. The code is tested on Open3D 15.1 and 16.0. If compiling Open3D from scratch, remove the Open3D dependency from the `env.yaml` file.
 
-You can create an anaconda environment called `point-slam-env`.
+You can create an anaconda environment called `point-slam`.
 ```bash
-conda env create -f environment.yaml
-conda activate point-slam-env
+conda env create -f env.yaml
+conda activate point-slam
 ```
 
 For evaluating the F-score, download and install [this](https://github.com/eriksandstroem/evaluate_3d_reconstruction_lib) library using pip. 
