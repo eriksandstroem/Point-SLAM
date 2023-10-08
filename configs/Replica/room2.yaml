@@ -2,5 +2,5 @@ scene: room2
 inherit_from: configs/Replica/replica.yaml
 config_path: configs/Replica/room2.yaml
 data:
-  input_folder: Datasets/Replica/room2
+  input_folder: datasets/Replica/room2
   output: output/Replica/room2
