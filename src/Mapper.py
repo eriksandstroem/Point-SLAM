@@ -868,9 +868,9 @@ class Mapper(object):
                         psnr_sum += psnr_frame
                         ssim_sum += ssim_value
                         lpips_sum += lpips_value
-                    if self.wandb:
-                        wandb.log({'idx_frame': render_idx,
-                                  'psnr_frame': psnr_frame})
+                        if self.wandb:
+                            wandb.log({'idx_frame': render_idx,
+                                       'psnr_frame': psnr_frame})
                     depth_l1_render += torch.abs(
                         gt_depth[gt_depth > 0] - cur_frame_depth[gt_depth > 0]).mean().item()
                     render_idx += cfg['mapping']['every_frame']
@@ -901,7 +901,7 @@ class Mapper(object):
         # Mesh the rendered color and depth images and evaluate the mesh
         if cfg['dataset'] in cfg["reconstruction_datasets"]:
             try:
-                print('Evaluating reconstruction...')
+                print('Construct Mesh...')
                 params_list = ['python', '-u', 'src/tools/get_mesh_tsdf_fusion.py',
                                str(cfg['config_path']
                                    ), '--output', cfg['data']['output'], '--no_render']
@@ -917,12 +917,13 @@ class Mapper(object):
 
                 # requires only one pair {} inside the printed result
                 print(result_recon)
-                start_index = result_recon.find('{')
-                end_index = result_recon.find('}')
-                result_dict = result_recon[start_index:end_index+1]
-                result_dict = literal_eval(result_dict)
-                if self.wandb:
-                    wandb.log(result_dict)
+                if cfg['meshing']['eval_rec']:
+                    start_index = result_recon.find('{')
+                    end_index = result_recon.find('}')
+                    result_dict = result_recon[start_index:end_index+1]
+                    result_dict = literal_eval(result_dict)
+                    if self.wandb:
+                        wandb.log(result_dict)
                 torch.cuda.empty_cache()
 
             except Exception as e:
@@ -937,5 +938,5 @@ class Mapper(object):
             if os.path.exists(f'{self.output}/ckpts'):
                 shutil.rmtree(f'{self.output}/ckpts')
         if self.wandb:
-            print('wandb finished.')
             wandb.finish()
+            print('wandb finished.')

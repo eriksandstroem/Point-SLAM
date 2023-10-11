@@ -11,6 +11,7 @@ import torch
 import open3d as o3d
 import warnings
 import trimesh
+import cv2
 
 from torch.utils.data import Dataset, DataLoader
 sys.path.append('.')
@@ -18,6 +19,7 @@ from src import config
 from src.Point_SLAM import Point_SLAM
 from src.utils.Visualizer import Visualizer
 from src.utils.datasets import get_dataset
+
 
 
 class DepthImageDataset(Dataset):
@@ -68,7 +70,8 @@ def load_neural_point_cloud(slam, ckpt, device, use_exposure=False):
     slam.npc.geo_feats = ckpt['geo_feats'].to(device)
     slam.npc.col_feats = ckpt['col_feats'].to(device)
     if use_exposure:
-        assert 'exposure_feat_all' in ckpt.keys(), 'Please check if exposure feature is encoded.'
+        assert 'exposure_feat_all' in ckpt.keys(
+        ), 'Please check if exposure feature is encoded.'
         slam.mapper.exposure_feat_all = ckpt['exposure_feat_all'].to(device)
 
     cloud_pos = torch.tensor(ckpt['cloud_pos'], device=device)
@@ -104,8 +107,10 @@ def load_ckpt(cfg, slam):
 
 
 def clean_mesh(mesh):
-    mesh_tri = trimesh.Trimesh(vertices=np.asarray(mesh.vertices), faces=np.asarray(mesh.triangles), vertex_colors=np.asarray(mesh.vertex_colors))
-    components = trimesh.graph.connected_components(edges=mesh_tri.edges_sorted)
+    mesh_tri = trimesh.Trimesh(vertices=np.asarray(mesh.vertices), faces=np.asarray(
+        mesh.triangles), vertex_colors=np.asarray(mesh.vertex_colors))
+    components = trimesh.graph.connected_components(
+        edges=mesh_tri.edges_sorted)
 
     min_len = 100
     components_to_keep = [c for c in components if len(c) >= min_len]
@@ -119,11 +124,13 @@ def clean_mesh(mesh):
         colors = mesh_tri.visual.vertex_colors[component]
 
         # Create a mapping from old vertex indices to new vertex indices
-        index_mapping = {old_idx: vertex_count + new_idx for new_idx, old_idx in enumerate(component)}
+        index_mapping = {old_idx: vertex_count +
+                         new_idx for new_idx, old_idx in enumerate(component)}
         vertex_count += len(vertices)
 
         # Select faces that are part of the current connected component and update vertex indices
-        faces_in_component = mesh_tri.faces[np.any(np.isin(mesh_tri.faces, component), axis=1)]
+        faces_in_component = mesh_tri.faces[np.any(
+            np.isin(mesh_tri.faces, component), axis=1)]
         reindexed_faces = np.vectorize(index_mapping.get)(faces_in_component)
 
         new_vertices.extend(vertices)
@@ -135,14 +142,17 @@ def clean_mesh(mesh):
 
     cleaned_mesh_tri.remove_degenerate_faces()
     cleaned_mesh_tri.remove_duplicate_faces()
-    print(f'Mesh cleaning (before/after), vertices: {len(mesh_tri.vertices)}/{len(cleaned_mesh_tri.vertices)}, faces: {len(mesh_tri.faces)}/{len(cleaned_mesh_tri.faces)}')
+    print(
+        f'Mesh cleaning (before/after), vertices: {len(mesh_tri.vertices)}/{len(cleaned_mesh_tri.vertices)}, faces: {len(mesh_tri.faces)}/{len(cleaned_mesh_tri.faces)}')
 
     cleaned_mesh = o3d.geometry.TriangleMesh(
         o3d.utility.Vector3dVector(cleaned_mesh_tri.vertices),
         o3d.utility.Vector3iVector(cleaned_mesh_tri.faces)
     )
-    vertex_colors = np.asarray(cleaned_mesh_tri.visual.vertex_colors)[:, :3] / 255.0
-    cleaned_mesh.vertex_colors = o3d.utility.Vector3dVector(vertex_colors.astype(np.float64))
+    vertex_colors = np.asarray(cleaned_mesh_tri.visual.vertex_colors)[
+        :, :3] / 255.0
+    cleaned_mesh.vertex_colors = o3d.utility.Vector3dVector(
+        vertex_colors.astype(np.float64))
 
     return cleaned_mesh
 
@@ -178,7 +188,8 @@ def main():
 
     parser.add_argument('--wandb', action='store_true')
     parser.add_argument('--no_wandb', action='store_true')
-    parser.add_argument('--clean', default=False, action='store_true', help='Enable mesh cleaning')
+    parser.add_argument('--clean', default=False,
+                        action='store_true', help='Enable mesh cleaning')
 
     args = parser.parse_args()
     assert torch.cuda.is_available(), 'GPU required for reconstruction.'
@@ -198,6 +209,7 @@ def main():
 
     render_frame = not args.no_render
     use_exposure = args.exposure_avail
+    frame_reader = get_dataset(cfg, args, device=device)
     if render_frame:
         load_neural_point_cloud(slam, ckpt, device, use_exposure=use_exposure)
         idx = 0
@@ -209,7 +221,7 @@ def main():
                 print('Successfully loaded decoders.')
         except Exception as e:
             raise ValueError(f'Cannot load decoders: {e}')
-        frame_reader = get_dataset(cfg, args, device=device)
+
         visualizer = Visualizer(freq=cfg['mapping']['vis_freq'], inside_freq=cfg['mapping']['vis_inside_freq'],
                                 vis_dir=os.path.join(slam.output, 'rendered_every_frame'), renderer=slam.renderer,
                                 verbose=slam.verbose, device=device, wandb=False)
@@ -233,7 +245,8 @@ def main():
                         state_dict)
                 except Exception as e:
                     print(e)
-                    raise ValueError(f'Cannot load per mapping-frame color decoder at frame {idx}.')
+                    raise ValueError(
+                        f'Cannot load per mapping-frame color decoder at frame {idx}.')
 
             ratio = radius_query_ratio
             intensity = rgb2gray(gt_color.cpu().numpy())
@@ -258,9 +271,13 @@ def main():
                     cur_frame_depth.cpu().numpy())
             np.save(f'{slam.output}/rendered_every_frame/color_{idx:05d}',
                     cur_frame_color.cpu().numpy())
+            img = cv2.cvtColor(
+                cur_frame_color.cpu().numpy()*255, cv2.COLOR_BGR2RGB)
+            cv2.imwrite(os.path.join(
+                f'{slam.output}/rendered_image', f'frame_{idx:05d}test.png'), img)
             idx += cfg['mapping']['every_frame']
             frame_cnt += 1
-            if idx%400==0:
+            if idx % 400 == 0:
                 print(f'{idx}...')
         if not args.silent:
             print(f'Finished rendering {frame_cnt} frames.')
@@ -289,7 +306,15 @@ def main():
 
     for i, (depth, color) in enumerate(dataloader):
         index = dataset.indices[i]
+        # load the gt depth from the sensor to filter the rendered depth map
+        _, gt_color, gt_depth, gt_c2w = frame_reader[cfg['mapping']
+                                                     ['every_frame']*i]
+        gt_depth = gt_depth.cpu().numpy()
         depth = depth[0].cpu().numpy()
+        # the rendered depth map is not accurate in areas where no sensor
+        # depth was observed. Set the rendered pixels to 0 where the
+        # no sensor depth exists.
+        depth[gt_depth == 0] = 0
         color = color[0].cpu().numpy()
         c2w = ckpt['estimate_c2w_list'][index].cpu().numpy()
 
@@ -310,14 +335,15 @@ def main():
             convert_rgb_to_intensity=False)
         volume.integrate(rgbd, intrinsic, w2c)
 
-        if i > 0 and cfg["meshing"]["mesh_freq"]>0 and (i % cfg["meshing"]["mesh_freq"]) == 0:
+        if i > 0 and cfg["meshing"]["mesh_freq"] > 0 and (i % cfg["meshing"]["mesh_freq"]) == 0:
             o3d_mesh = volume.extract_triangle_mesh()
             o3d_mesh = o3d_mesh.translate(compensate_vector)
             if args.clean or cfg['dataset'] != 'replica':
                 o3d_mesh = clean_mesh(o3d_mesh)
             o3d.io.write_triangle_mesh(
                 f"{slam.output}/mesh/mid_mesh/frame_{cfg['mapping']['every_frame']*i}_mesh.ply", o3d_mesh)
-            print(f"saved intermediate mesh until frame {cfg['mapping']['every_frame']*i}.")
+            print(
+                f"saved intermediate mesh until frame {cfg['mapping']['every_frame']*i}.")
 
     o3d_mesh = volume.extract_triangle_mesh()
     np.save(os.path.join(f'{slam.output}/mesh',
@@ -343,7 +369,8 @@ def main():
                 print(result_recon)
                 print('✨ Successfully evaluated 3D reconstruction.')
             else:
-                print('Current dataset is not supported for 3D reconstruction evaluation.')
+                print(
+                    'Current dataset is not supported for 3D reconstruction evaluation.')
         except subprocess.CalledProcessError as e:
             print(e.stderr)
             print('Failed to evaluate 3D reconstruction.')
