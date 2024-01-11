@@ -271,10 +271,7 @@ def main():
                     cur_frame_depth.cpu().numpy())
             np.save(f'{slam.output}/rendered_every_frame/color_{idx:05d}',
                     cur_frame_color.cpu().numpy())
-            img = cv2.cvtColor(
-                cur_frame_color.cpu().numpy()*255, cv2.COLOR_BGR2RGB)
-            cv2.imwrite(os.path.join(
-                f'{slam.output}/rendered_image', f'frame_{idx:05d}test.png'), img)
+
             idx += cfg['mapping']['every_frame']
             frame_cnt += 1
             if idx % 400 == 0:
