@@ -45,10 +45,10 @@ SHELL ["/bin/bash", "--login", "-c"]
 RUN conda update -n base -c defaults conda
 
 # copy environment file
-COPY environment.yml environment.yml
+COPY env.yaml env.yaml
 
 # Create a Conda environment
-RUN conda env create -f environment.yml
+RUN conda env create -f env.yaml
 
 # start container in cyws3d env
 RUN touch ~/.bashrc && echo "conda activate point-slam" >> ~/.bashrc
