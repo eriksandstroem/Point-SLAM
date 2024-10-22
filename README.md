@@ -79,7 +79,7 @@ Point-SLAM Architecture.
 
 
 ## Installation
-
+### using Conda
 First you have to make sure that you have all dependencies in place.
 The simplest way to do so is to use [anaconda](https://www.anaconda.com/). 
 
@@ -97,6 +97,16 @@ git clone https://github.com/tfy14esa/evaluate_3d_reconstruction_lib.git
 cd evaluate_3d_reconstruction_lib
 pip install .
 ```
+
+### using Docker
+To run the project inside a docker container, first create the container and then run it in interactive mode, using the available GPUs.
+```
+docker build -t point-slam:latest .
+docker run -it --rm --gpus all point-slam:latest
+```
+
+For detailed information see the Docker documentation about the run arguments.
+After starting the container in a terminal window, continue with the instructions below.
 
 ## Data Download
 
